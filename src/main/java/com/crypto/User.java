@@ -5,11 +5,21 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import org.json.JSONObject;
 
 public class User {
 
     public String message(String msg){
         return "returned from message() " +msg;
+    }
+
+    static public String generateJson(){
+        JSONObject obj = new JSONObject();
+        obj.put("id", "123");
+        obj.put("name", "bhavesh");
+        obj.put("phone_no", "1234567890");
+        System.out.println("JSON Data : "+obj);
+        return obj.toString();
     }
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
@@ -51,6 +61,9 @@ public class User {
                         genKey.generateRSAKeys();
                         Sender sender = new Sender(params);
                         sender.printKeys();
+
+                        sender.getSHA256Hash(generateJson());
+
                         System.out.println("Completed");
                     }
                 }else if (args[0].contains("exit")){

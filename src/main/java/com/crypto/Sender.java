@@ -1,6 +1,8 @@
 package com.crypto;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,9 +60,16 @@ public class Sender extends GenerateKey  {
     }
 
 
-//    private String getSHA256Hash(){
-//
-//    }
+    public String getSHA256Hash(String data) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hash = digest.digest(data.getBytes("UTF-8"));
+        System.out.println("JSON To HASH :"+bytesToHex(hash));
+        return bytesToHex(hash); // make it printable
+    }
+
+    private String  bytesToHex(byte[] hash) {
+        return DatatypeConverter.printHexBinary(hash);
+    }
 
 
 
