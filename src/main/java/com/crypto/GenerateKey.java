@@ -1,11 +1,15 @@
 package com.crypto;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 public class GenerateKey {
 
@@ -13,47 +17,28 @@ public class GenerateKey {
     public String id;
     public String publicKeyPath ;
     public String privateKeyPath ;
-    public String aesKeyPath ;
+    public String receiverPublicKey;
+    public String receiverUserId ;
 
 
     public GenerateKey(String[] args) {
         this.id = args[4];
+        this.receiverUserId = args[2];
         this.publicKeyPath = basePath + id + "\\public.pub";
         this.privateKeyPath = basePath + id + "\\private.key";
+        this.receiverPublicKey = basePath + args[2] + "\\public.pub";
+        createUserDirectory(basePath+id);
+        createUserDirectory(basePath+args[2]);
+
+    }
+
+
+    public void createUserDirectory(String dir){
         File f = new File(basePath+id);
         if (!f.isDirectory()){
             f.mkdir();
         }
     }
-
-
-    static private void processFile(Cipher ci, InputStream in, OutputStream out)
-            throws javax.crypto.IllegalBlockSizeException,
-            javax.crypto.BadPaddingException,
-            java.io.IOException
-    {
-        byte[] ibuf = new byte[1024];
-        int len;
-        while ((len = in.read(ibuf)) != -1) {
-            byte[] obuf = ci.update(ibuf, 0, len);
-            if ( obuf != null ) out.write(obuf);
-        }
-        byte[] obuf = ci.doFinal();
-        if ( obuf != null ) out.write(obuf);
-    }
-
-    static private void processFile(Cipher ci,String inFile,String outFile)
-            throws javax.crypto.IllegalBlockSizeException,
-            javax.crypto.BadPaddingException,
-            java.io.IOException
-    {
-        try (FileInputStream in = new FileInputStream(inFile);
-             FileOutputStream out = new FileOutputStream(outFile)) {
-            processFile(ci, in, out);
-        }
-    }
-
-
     public boolean isKeyPairExists(){
         File pvtKeyFile = new File(this.privateKeyPath);
         File pubKeyFile = new File(this.privateKeyPath);
@@ -66,6 +51,29 @@ public class GenerateKey {
             return true;
         }
     }
+
+    public PrivateKey getPrivateKey(String keyPath) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+        Path path = Paths.get(keyPath);
+        byte[] bytes = Files.readAllBytes(path);
+
+        /* Generate private key. */
+        PKCS8EncodedKeySpec ks = new PKCS8EncodedKeySpec(bytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PrivateKey pvt = kf.generatePrivate(ks);
+        return pvt;
+    }
+
+    public PublicKey getPublicKey(String keyPath) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        Path path = Paths.get(keyPath);
+        byte[] bytes = Files.readAllBytes(path);
+
+        /* Generate public key. */
+        X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PublicKey pub = kf.generatePublic(ks);
+        return pub;
+    }
+
 
 
     public String generateRSAKeys() throws
@@ -97,22 +105,5 @@ public class GenerateKey {
         return "success";
     }
 
-//    public String generateAESKey() throws NoSuchAlgorithmException {
-//        KeyGenerator kgen = KeyGenerator.getInstance("AES");
-//        kgen.init(128);
-//        SecretKey skey = kgen.generateKey();
-//
-//        try (FileOutputStream out = new FileOutputStream( )) {
-//            out.write(pvt.getEncoded());
-//            out.close();
-//        }
-//
-//
-//        byte[] iv = new byte[128/8];
-//        new SecureRandom().nextBytes(iv);
-//        IvParameterSpec ivspec = new IvParameterSpec(iv);
-//
-//        return "success";
-//    }
 
 }
