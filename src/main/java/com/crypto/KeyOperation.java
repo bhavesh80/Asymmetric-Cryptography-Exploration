@@ -1,7 +1,6 @@
 package com.crypto;
 
 import javax.crypto.*;
-import javax.crypto.spec.IvParameterSpec;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +10,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-public class GenerateKey {
+public class KeyOperation {
 
     public String basePath = "D:\\crytography\\user\\";
     public String id;
@@ -20,8 +19,7 @@ public class GenerateKey {
     public String receiverPublicKey;
     public String receiverUserId ;
 
-
-    public GenerateKey(String[] args) {
+    public KeyOperation(String[] args) {
         this.id = args[4];
         this.receiverUserId = args[2];
         this.publicKeyPath = basePath + id + "\\public.pub";
@@ -29,16 +27,21 @@ public class GenerateKey {
         this.receiverPublicKey = basePath + args[2] + "\\public.pub";
         createUserDirectory(basePath+id);
         createUserDirectory(basePath+args[2]);
-
     }
 
-
+    /**
+     *  Check sender and receiver directory , if not exists then created
+     */
     public void createUserDirectory(String dir){
         File f = new File(basePath+id);
         if (!f.isDirectory()){
             f.mkdir();
         }
     }
+
+    /**
+     *  Check if RSA KeyPair exits
+     */
     public boolean isKeyPairExists(){
         File pvtKeyFile = new File(this.privateKeyPath);
         File pubKeyFile = new File(this.privateKeyPath);
@@ -52,7 +55,11 @@ public class GenerateKey {
         }
     }
 
-    public PrivateKey getPrivateKey(String keyPath) throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+    /**
+     *  Read RSA private key from filename.key and convert to PrivateKey object
+     */
+    public PrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
+        String keyPath = this.privateKeyPath;
         Path path = Paths.get(keyPath);
         byte[] bytes = Files.readAllBytes(path);
 
@@ -63,7 +70,11 @@ public class GenerateKey {
         return pvt;
     }
 
-    public PublicKey getPublicKey(String keyPath) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    /**
+     *  Read RSA Public key from filename.pub and convert to PublicKey object
+     */
+    public PublicKey getPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        String keyPath = this.publicKeyPath;
         Path path = Paths.get(keyPath);
         byte[] bytes = Files.readAllBytes(path);
 
@@ -74,13 +85,28 @@ public class GenerateKey {
         return pub;
     }
 
+    /**
+     *  Read RSA Public key of Receiver from filename.pub and convert to PublicKey object
+     */
+    public PublicKey getReceiverPublicKey() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        String keyPath = this.receiverPublicKey;
+        Path path = Paths.get(keyPath);
+        byte[] bytes = Files.readAllBytes(path);
 
+        /* Generate Receiver public key. */
+        X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        PublicKey pub = kf.generatePublic(ks);
+        return pub;
+    }
 
+    /**
+     *  Generate RSA keyPair i.e public key public.pub and private.key
+     */
     public String generateRSAKeys() throws
             NoSuchAlgorithmException,
             java.io.IOException
     {
-
         boolean keysExists = isKeyPairExists();
         if (!keysExists){
             System.out.println("Generating Keys");
@@ -102,8 +128,27 @@ public class GenerateKey {
             System.out.println("Public key format: " + pub.getFormat());
             return "success";
         }
-        return "success";
+        return "failed";
     }
 
+
+    /**
+     *  Generate AES key and return object of SecretKey containing AES key
+     */
+    public SecretKey generateAESKey(int n) throws NoSuchAlgorithmException, IOException {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
+        keyGenerator.init(n);
+        SecretKey key = keyGenerator.generateKey();
+        return key;
+    }
+
+    /**
+     *  Generate Initialization Vector byte for AES key and return byte value of IV
+     */
+    public  byte[] generateIv() {
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+        return iv;
+    }
 
 }
